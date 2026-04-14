@@ -15,6 +15,7 @@ import os
 load_dotenv()
 
 tools = [wikipedia_search, duckduckgo_search]
+# my next task is to seperate the functions in main.py into other files to make it more organized
 
 # temperature controls how random/creative the output is. Higher = more creative, lower = more consistent
 llm = ChatOpenAI(
