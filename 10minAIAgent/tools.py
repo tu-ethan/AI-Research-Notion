@@ -22,10 +22,18 @@ def wikipedia_search(query: str) -> str:
 def duckduckgo_search(query: str) -> str:
     """Search the web using DuckDuckGo and return the top 3 results"""
 
-    print("start google search")
-    results = DDGS().text(query, max_results=3)
-    print("end google search")
-    return "\n".join([
-        f"{result['title']}: {result['href']}: {result['body']}"
-        for result in results
-    ])
+    try:
+        print("start search")
+        results = DDGS().text(query, max_results=3)
+        print("end search")
+
+        if not results:
+            print("no results found")
+            return "SEARCH_FAILED: no results found"
+        return "\n".join([
+            f"{result['title']}: {result['href']}: {result['body']}"
+            for result in results
+        ])
+    except Exception as e:
+        print("search failed")
+        return f"SEARCH_FAILED: {str(e)}"
