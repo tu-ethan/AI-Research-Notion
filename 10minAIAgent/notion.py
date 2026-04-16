@@ -1,5 +1,5 @@
 import requests
-from agent import ResearchResponse
+from agent import FormatResponse
 
 url = "https://api.notion.com/v1/pages"
 
@@ -15,8 +15,22 @@ def sendToNotion(raw_response):
 
 def processContent(AIresponse):
     
-    data = ResearchResponse.model_validate(AIresponse)
+    data = FormatResponse.model_validate(AIresponse)
+    sources = data.sources
 
+    sources_property = {
+        "rich_text": [
+            {
+                "text": {
+                    "content": source.title + "\n",
+                    "link": {
+                        "url": source.link
+                    }
+                }
+            }
+            for source in sources
+        ]
+    }
     titleData = {
         "parent": { "database_id": "3395c6316e5980b59bc6f488030fe87a" },
         "properties": {
@@ -24,7 +38,8 @@ def processContent(AIresponse):
                 "title": [
                     {"text": {"content": data.topic}}
                 ]
-            }
+            },
+            "Sources": sources_property
         }
     }
 
@@ -59,16 +74,22 @@ def processContent(AIresponse):
 def postToNotion(title, blocks):
     res = requests.post(url, headers=headers, json=title) # creates a notion page with title
 
+    if res.status_code != 200:
+        print("ERROR:", res.json())
+        raise Exception("Notion create page request failed")
+
     page_id = res.json()["id"]
     page_id = str(page_id).strip()
-    print(page_id, type(page_id))
+    print("Successfully Created Notion Page")
 
     blocks_url = f"https://api.notion.com/v1/blocks/{page_id}/children"
 
-    res_blocks = requests.patch(
+    res = requests.patch(
         blocks_url,
         headers=headers,
         json={"children": blocks}
     )
-
-    print(res_blocks.status_code, res_blocks.text)
+    if res.status_code != 200:
+        print("ERROR:", res.json())
+        raise Exception("Notion edit page failed")
+    print("Successfully posted information to notion")

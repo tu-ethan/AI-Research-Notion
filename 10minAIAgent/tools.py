@@ -2,6 +2,7 @@ from langchain_core.tools import tool
 from ddgs import DDGS
 import requests
 
+# taking took out of commission because its very complex, the query doesn't always line up with a webpage
 @tool
 def wikipedia_search(query: str) -> str:
     """
@@ -28,12 +29,31 @@ def duckduckgo_search(query: str) -> str:
         print("end search")
 
         if not results:
-            print("no results found")
-            return "SEARCH_FAILED: no results found"
-        return "\n".join([
-            f"{result['title']}: {result['href']}: {result['body']}"
-            for result in results
-        ])
+            print("SEARCH FAILED: no results found")
+            return {
+                "text": "SEARCH_FAILED: no results found",
+                "results": []
+            }
+        
+        clean_results = [
+            {
+                "title": r["title"],
+                "url": r["href"],
+                "summary": r["body"]
+            }
+            for r in results
+        ]
+
+        return {
+            "text": "\n".join(
+                f"{r['title']}: {r['url']}: {r['summary']}"
+                for r in clean_results
+            ),
+            "results": clean_results
+        }
     except Exception as e:
-        print("search failed")
-        return f"SEARCH_FAILED: {str(e)}"
+        print("SEARCH_FAILED: {str(e)}")
+        return {
+                "text": f"SEARCH_FAILED: {str(e)}",
+                "results": []
+            }
